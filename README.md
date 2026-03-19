@@ -1,5 +1,6 @@
 <p align="center">
   <img src="badges/logotype_brain.svg" alt="aiMed" width="400">
+  <img src="badges/logotype_brain.svg" alt="aiMed" width="400">
 </p>
 
 <p align="center"><strong>AI Involvement Marking for Every Document</strong></p>
