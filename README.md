@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="badges/logotype_brain.svg" alt="aiMed" width="400">
+  <img src="badges/logotype_a.svg" alt="aiMed" width="400"><br>
   <img src="badges/logotype_brain.svg" alt="aiMed" width="400">
 </p>
 
