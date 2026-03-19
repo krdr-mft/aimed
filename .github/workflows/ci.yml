@@ -22,12 +22,12 @@ jobs:
         run: npm install -g ajv-cli ajv-formats
 
       - name: Validate schema is valid JSON Schema
-        run: ajv compile -s schema/aimed.schema.json
+        run: ajv compile -s schema/aimed.schema.json -c ajv-formats
 
       - name: Validate example declarations
         run: |
-          ajv validate -s schema/aimed.schema.json -d examples/package-json.json
-          ajv validate -s schema/aimed.schema.json -d examples/academic-paper.yaml --spec=yaml
+          ajv validate -s schema/aimed.schema.json -d examples/package-json.json -c ajv-formats
+          ajv validate -s schema/aimed.schema.json -d examples/academic-paper.yaml --spec=yaml -c ajv-formats
 
   test-parser:
     name: Test Parser Library
