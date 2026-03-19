@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aimed.dev/schema/v1.0/aimed.schema.json",
+  "title": "AIMED Declaration",
+  "description": "AI Involvement Marking for Every Document — structured declaration schema v1.0",
+  "type": "object",
+  "required": ["aimed"],
+  "properties": {
+    "aimed": {
+      "type": "object",
+      "required": ["version", "scores"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^1\\.\\d+$",
+          "description": "AIMED specification version (major.minor)"
+        },
+        "scores": {
+          "type": "object",
+          "description": "Area-intensity pairs. Keys are core area codes (single uppercase letter) or custom codes (+ prefix with two lowercase letters).",
+          "minProperties": 1,
+          "patternProperties": {
+            "^[IRDAETGSVX]$": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 5,
+              "description": "Core area intensity score (0=None, 1=Minimal, 2=Light, 3=Moderate, 4=Heavy, 5=Full)"
+            },
+            "^\\+[a-z]{2}$": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 5,
+              "description": "Custom area intensity score"
+            }
+          },
+          "additionalProperties": false
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Optional metadata about the AI involvement.",
+          "properties": {
+            "tool": {
+              "type": "string",
+              "description": "Name/identifier of the AI tool used"
+            },
+            "date": {
+              "type": "string",
+              "format": "date",
+              "description": "Date of the declaration (ISO 8601)"
+            },
+            "note": {
+              "type": "string",
+              "maxLength": 500,
+              "description": "Human-readable note about the AI involvement"
+            },
+            "author": {
+              "type": "string",
+              "description": "Person or entity making the declaration"
+            },
+            "custom_areas": {
+              "type": "object",
+              "description": "Definitions for custom area codes used in scores",
+              "patternProperties": {
+                "^\\+[a-z]{2}$": {
+                  "type": "string",
+                  "description": "Human-readable name of the custom area"
+                }
+              },
+              "additionalProperties": false
+            },
+            "domain_profile": {
+              "type": "string",
+              "description": "Name of the domain profile being used (e.g., 'academic', 'music', 'legal')"
+            }
+          },
+          "additionalProperties": true
+        },
+        "sections": {
+          "type": "array",
+          "description": "Optional section-level declarations for mixed-involvement documents",
+          "items": {
+            "type": "object",
+            "required": ["scope", "scores"],
+            "properties": {
+              "scope": {
+                "type": "string",
+                "description": "Identifier for the section (heading, line range, component name, etc.)"
+              },
+              "scores": {
+                "$ref": "#/properties/aimed/properties/scores"
+              },
+              "metadata": {
+                "$ref": "#/properties/aimed/properties/metadata"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

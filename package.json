@@ -1,0 +1,36 @@
+{
+  "name": "aimed",
+  "version": "1.0.0",
+  "description": "aiMed — AI Involvement Marking for Every Document. An open standard for transparent AI disclosure.",
+  "main": "lib/aimed.js",
+  "scripts": {
+    "test": "node lib/aimed.test.js",
+    "badge": "node badges/generate-badge.js"
+  },
+  "keywords": [
+    "ai",
+    "transparency",
+    "disclosure",
+    "standard",
+    "marking",
+    "metadata",
+    "open-standard"
+  ],
+  "license": "CC0-1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aimed-standard/aimed"
+  },
+  "aimed": {
+    "version": "1.0",
+    "scores": {
+      "S": 3,
+      "D": 4,
+      "E": 2
+    },
+    "metadata": {
+      "tool": "claude-opus-4",
+      "note": "Repository structure and tooling AI-assisted; human directed all design decisions"
+    }
+  }
+}

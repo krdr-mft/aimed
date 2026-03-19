@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIMED — Badge Generator & Playground</title>
+<meta name="aimed" content="AIMED/1 S:3 D:5 G:4 E:2 | tool=claude-opus-4">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0e13;
+    --surface: #14171e;
+    --surface-2: #1c2029;
+    --border: #2a2e3a;
+    --text: #e2e4ea;
+    --text-dim: #7a7f91;
+    --accent: #4af0c0;
+    --accent-dim: #4af0c020;
+    --score-0: #2a2e3a;
+    --score-1: #3b5998;
+    --score-2: #2e86de;
+    --score-3: #f0a03c;
+    --score-4: #e05030;
+    --score-5: #d63384;
+    --radius: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Grain overlay ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+    animation: fadeUp 0.6s ease;
+  }
+
+  .logo {
+    font-size: 48px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    background: linear-gradient(135deg, var(--accent), #80f0ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+
+  .logo span {
+    opacity: 0.4;
+    font-weight: 300;
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 15px;
+    font-weight: 300;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ── Sections ── */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 24px;
+    animation: fadeUp 0.6s ease backwards;
+  }
+
+  .section:nth-child(2) { animation-delay: 0.1s; }
+  .section:nth-child(3) { animation-delay: 0.2s; }
+  .section:nth-child(4) { animation-delay: 0.3s; }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Score Sliders ── */
+  .areas-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 640px) {
+    .areas-grid { grid-template-columns: 1fr; }
+  }
+
+  .area-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--surface-2);
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .area-row:hover {
+    border-color: var(--border);
+  }
+
+  .area-row.active {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  .area-code {
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    font-weight: 500;
+    width: 28px;
+    text-align: center;
+    color: var(--accent);
+  }
+
+  .area-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .area-name {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  .score-dots {
+    display: flex;
+    gap: 4px;
+  }
+
+  .score-dot {
+    width: 28px;
+    height: 10px;
+    border-radius: 5px;
+    background: var(--score-0);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    padding: 0;
+  }
+
+  .score-dot:hover {
+    transform: scaleY(1.4);
+  }
+
+  .score-dot.filled-1 { background: var(--score-1); }
+  .score-dot.filled-2 { background: var(--score-2); }
+  .score-dot.filled-3 { background: var(--score-3); }
+  .score-dot.filled-4 { background: var(--score-4); }
+  .score-dot.filled-5 { background: var(--score-5); }
+
+  .score-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    width: 55px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* ── Metadata ── */
+  .meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  @media (max-width: 640px) {
+    .meta-grid { grid-template-columns: 1fr; }
+  }
+
+  .meta-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .meta-field input,
+  .meta-field textarea {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    transition: border-color 0.2s;
+  }
+
+  .meta-field input:focus,
+  .meta-field textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .meta-field.full { grid-column: 1 / -1; }
+
+  .meta-field textarea {
+    resize: vertical;
+    min-height: 60px;
+  }
+
+  /* ── Badge Preview ── */
+  .badge-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .badge-container {
+    position: relative;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: stretch;
+    background: #000;
+    border: 1px solid #333;
+    border-radius: 6px;
+    overflow: hidden;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    min-height: 40px;
+  }
+
+  .badge-label {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background: #111;
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  .badge-scores {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    gap: 6px;
+    flex-wrap: wrap;
+    background: #222;
+  }
+
+  .badge-score-item {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .badge-score-code {
+    color: #999;
+  }
+
+  .badge-score-val {
+    font-weight: 500;
+    color: #ccc;
+  }
+
+  .badge-composite {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-left: 1px solid #333;
+    background: #222;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+  }
+
+  /* ── Large visual badge ── */
+  .visual-badge {
+    width: 100%;
+    max-width: 500px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 12px;
+  }
+
+  .vis-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .vis-ring {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .vis-ring svg {
+    position: absolute;
+    inset: 0;
+    transform: rotate(-90deg);
+  }
+
+  .vis-ring-code {
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    font-weight: 500;
+    z-index: 1;
+  }
+
+  .vis-cell-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Output ── */
+  .output-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .output-tab {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .output-tab:hover {
+    color: var(--text);
+    border-color: var(--text-dim);
+  }
+
+  .output-tab.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+
+  .output-code {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: var(--text);
+    position: relative;
+    min-height: 48px;
+  }
+
+  .copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 6px 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .copy-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .copy-btn.copied {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  /* ── Parse tab ── */
+  .parse-area textarea {
+    width: 100%;
+    padding: 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    min-height: 100px;
+    resize: vertical;
+    margin-bottom: 12px;
+  }
+
+  .parse-area textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .parse-btn {
+    padding: 10px 24px;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .parse-btn:hover { opacity: 0.85; }
+
+  .parse-result {
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    display: none;
+  }
+
+  .parse-result.show { display: block; }
+  .parse-result.error { border-color: var(--score-4); color: var(--score-4); }
+  .parse-result.success { border-color: var(--accent); }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    margin-top: 40px;
+    padding: 24px;
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+
+  .footer code {
+    font-family: 'DM Mono', monospace;
+    color: var(--accent);
+    background: var(--surface-2);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="logo">aiMed <span>/1</span></div>
+    <div class="subtitle">AI Involvement Marking for Every Document</div>
+  </div>
+
+  <!-- Score Builder -->
+  <div class="section">
+    <div class="section-title">Set AI Involvement</div>
+    <div class="areas-grid" id="areas-grid"></div>
+  </div>
+
+  <!-- Metadata -->
+  <div class="section">
+    <div class="section-title">Metadata (optional)</div>
+    <div class="meta-grid">
+      <div class="meta-field">
+        <label>Tool</label>
+        <input type="text" id="meta-tool" placeholder="e.g. claude-4, copilot" oninput="render()">
+      </div>
+      <div class="meta-field">
+        <label>Author</label>
+        <input type="text" id="meta-author" placeholder="e.g. your name" oninput="render()">
+      </div>
+      <div class="meta-field full">
+        <label>Note</label>
+        <textarea id="meta-note" placeholder="e.g. AI drafted initial code; human refactored architecture" oninput="render()"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Badge Preview -->
+  <div class="section">
+    <div class="section-title">Badge Preview</div>
+    <div class="badge-area">
+      <div class="badge-container" id="badge-inline"></div>
+      <div class="visual-badge" id="badge-visual"></div>
+    </div>
+  </div>
+
+  <!-- Output -->
+  <div class="section">
+    <div class="section-title">Export</div>
+    <div class="output-tabs" id="output-tabs">
+      <button class="output-tab active" data-tab="compact">Compact</button>
+      <button class="output-tab" data-tab="json">JSON</button>
+      <button class="output-tab" data-tab="yaml">YAML</button>
+      <button class="output-tab" data-tab="html">HTML Meta</button>
+      <button class="output-tab" data-tab="markdown">Markdown</button>
+      <button class="output-tab" data-tab="comment-py">Python</button>
+      <button class="output-tab" data-tab="comment-js">JavaScript</button>
+      <button class="output-tab" data-tab="git">Git Commit</button>
+    </div>
+    <div class="output-code" id="output-code">
+      <button class="copy-btn" id="copy-btn" onclick="copyOutput()">COPY</button>
+      <span id="output-text"></span>
+    </div>
+  </div>
+
+  <!-- Parser -->
+  <div class="section">
+    <div class="section-title">Parse & Validate</div>
+    <div class="parse-area">
+      <textarea id="parse-input" placeholder="Paste any AIMED declaration here to parse and validate it...&#10;&#10;Example: AIMED/1 I:2 D:4 E:3 | tool=claude-4"></textarea>
+      <button class="parse-btn" onclick="parseInput()">Parse & Validate</button>
+      <div class="parse-result" id="parse-result"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    AIMED v1.0 — Open Standard — <code>CC0 1.0</code> Public Domain<br>
+    <span style="font-size:11px;margin-top:8px;display:inline-block;">aiMed logos and marks are proprietary. Declarations are self-reported — no accuracy guarantee.</span>
+  </div>
+</div>
+
+<script>
+// ── AIMED Core (inline for standalone use) ──
+
+const CORE_AREAS = {
+  I: 'Ideation', R: 'Research', D: 'Drafting', E: 'Editing',
+  T: 'Translation', V: 'Validation', A: 'Analysis',
+  G: 'Visual / Design', S: 'Strategy', X: 'Execution'
+};
+
+const INTENSITY = ['None', 'Minimal', 'Light', 'Moderate', 'Heavy', 'Full'];
+const SCORE_COLORS = ['#2a2e3a', '#3b5998', '#2e86de', '#f0a03c', '#e05030', '#d63384'];
+
+const state = {};
+Object.keys(CORE_AREAS).forEach(k => state[k] = 0);
+
+let activeTab = 'compact';
+
+// ── Build UI ──
+
+function buildAreas() {
+  const grid = document.getElementById('areas-grid');
+  grid.innerHTML = '';
+  Object.entries(CORE_AREAS).forEach(([code, name]) => {
+    const row = document.createElement('div');
+    row.className = `area-row${state[code] > 0 ? ' active' : ''}`;
+    row.id = `row-${code}`;
+
+    let dots = '';
+    for (let i = 1; i <= 5; i++) {
+      const filled = i <= state[code] ? ` filled-${state[code]}` : '';
+      dots += `<button class="score-dot${filled}" data-area="${code}" data-score="${i}" aria-label="${name} score ${i}"></button>`;
+    }
+
+    row.innerHTML = `
+      <div class="area-code">${code}</div>
+      <div class="area-info">
+        <div class="area-name">${name}</div>
+        <div class="score-dots">${dots}</div>
+      </div>
+      <div class="score-label">${state[code]}/${5} ${INTENSITY[state[code]]}</div>
+    `;
+    grid.appendChild(row);
+  });
+
+  // Attach click handlers
+  grid.querySelectorAll('.score-dot').forEach(dot => {
+    dot.addEventListener('click', () => {
+      const area = dot.dataset.area;
+      const score = parseInt(dot.dataset.score);
+      // Toggle: clicking same score resets to 0
+      state[area] = state[area] === score ? score - 1 : score;
+      buildAreas();
+      render();
+    });
+  });
+}
+
+// ── Rendering ──
+
+function getScores() {
+  const s = {};
+  Object.entries(state).forEach(([k, v]) => {
+    if (v > 0) s[k] = v;
+  });
+  return s;
+}
+
+function getMetadata() {
+  const m = {};
+  const tool = document.getElementById('meta-tool').value.trim();
+  const author = document.getElementById('meta-author').value.trim();
+  const note = document.getElementById('meta-note').value.trim();
+  if (tool) m.tool = tool;
+  if (author) m.author = author;
+  if (note) m.note = note;
+  return Object.keys(m).length ? m : null;
+}
+
+function toCompact() {
+  const scores = getScores();
+  if (Object.keys(scores).length === 0) return 'AIMED/1 (no areas selected)';
+  let str = 'AIMED/1 ' + Object.entries(scores).map(([k, v]) => `${k}:${v}`).join(' ');
+  const meta = getMetadata();
+  if (meta) {
+    const pairs = Object.entries(meta).map(([k, v]) =>
+      v.includes(' ') ? `${k}="${v}"` : `${k}=${v}`
+    );
+    str += ' | ' + pairs.join(' ');
+  }
+  return str;
+}
+
+function toJSONOutput() {
+  const scores = getScores();
+  const obj = { aimed: { version: '1.0', scores } };
+  const meta = getMetadata();
+  if (meta) obj.aimed.metadata = meta;
+  return JSON.stringify(obj, null, 2);
+}
+
+function toYAMLOutput() {
+  const scores = getScores();
+  const meta = getMetadata();
+  let y = 'aimed:\n  version: "1.0"\n  scores:\n';
+  Object.entries(scores).forEach(([k, v]) => y += `    ${k}: ${v}\n`);
+  if (meta) {
+    y += '  metadata:\n';
+    Object.entries(meta).forEach(([k, v]) => y += `    ${k}: "${v}"\n`);
+  }
+  return y;
+}
+
+function compositeScore() {
+  const scores = getScores();
+  const entries = Object.values(scores);
+  if (entries.length === 0) return 0;
+  return Math.round((entries.reduce((a, b) => a + b, 0) / (entries.length * 5)) * 100);
+}
+
+function getOutput() {
+  const compact = toCompact();
+  switch (activeTab) {
+    case 'compact': return compact;
+    case 'json': return toJSONOutput();
+    case 'yaml': return toYAMLOutput();
+    case 'html': return `<meta name="aimed" content="${compact.replace(/"/g, '&quot;')}">`;
+    case 'markdown': return `---\naimed: "${compact}"\n---`;
+    case 'comment-py': return `# ${compact}`;
+    case 'comment-js': return `// ${compact}`;
+    case 'git': return `feat: your commit message here\n\n${compact}`;
+    default: return compact;
+  }
+}
+
+function renderBadgeInline() {
+  const scores = getScores();
+  const container = document.getElementById('badge-inline');
+  if (Object.keys(scores).length === 0) {
+    container.innerHTML = '<div style="color:var(--text-dim);font-size:14px;">Select at least one area above to see the badge</div>';
+    return;
+  }
+
+  const comp = compositeScore();
+  const items = Object.entries(scores).map(([k, v]) =>
+    `<span class="badge-score-item"><span class="badge-score-code">${k}:</span><span class="badge-score-val">${v}</span></span>`
+  ).join('');
+
+  container.innerHTML = `
+    <div class="badge">
+      <div class="badge-label">aiMed</div>
+      <div class="badge-scores">${items}</div>
+      <div class="badge-composite">${comp}%</div>
+    </div>
+  `;
+}
+
+function renderBadgeVisual() {
+  const scores = getScores();
+  const container = document.getElementById('badge-visual');
+  if (Object.keys(scores).length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  const cells = Object.entries(CORE_AREAS).map(([code, name]) => {
+    const score = state[code];
+    const pct = score / 5;
+    const color = SCORE_COLORS[score];
+    const r = 24;
+    const circ = 2 * Math.PI * r;
+    const dashoffset = circ * (1 - pct);
+
+    return `
+      <div class="vis-cell">
+        <div class="vis-ring">
+          <svg viewBox="0 0 56 56">
+            <circle cx="28" cy="28" r="${r}" fill="none" stroke="var(--score-0)" stroke-width="4"/>
+            <circle cx="28" cy="28" r="${r}" fill="none" stroke="${color}" stroke-width="4"
+              stroke-dasharray="${circ}" stroke-dashoffset="${dashoffset}"
+              stroke-linecap="round" style="transition: stroke-dashoffset 0.4s ease"/>
+          </svg>
+          <span class="vis-ring-code" style="color:${score > 0 ? color : 'var(--text-dim)'}">${code}</span>
+        </div>
+        <div class="vis-cell-label">${name.split('/')[0].trim()}</div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = cells;
+}
+
+function render() {
+  renderBadgeInline();
+  renderBadgeVisual();
+  document.getElementById('output-text').textContent = getOutput();
+}
+
+// ── Tabs ──
+
+document.getElementById('output-tabs').addEventListener('click', (e) => {
+  if (!e.target.classList.contains('output-tab')) return;
+  document.querySelectorAll('.output-tab').forEach(t => t.classList.remove('active'));
+  e.target.classList.add('active');
+  activeTab = e.target.dataset.tab;
+  render();
+});
+
+// ── Copy ──
+
+function copyOutput() {
+  const text = document.getElementById('output-text').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'COPIED!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── Parser ──
+
+function parseInput() {
+  const input = document.getElementById('parse-input').value.trim();
+  const result = document.getElementById('parse-result');
+
+  if (!input) {
+    result.className = 'parse-result show error';
+    result.textContent = 'Please enter an AIMED declaration to parse.';
+    return;
+  }
+
+  try {
+    // Extract from various comment styles
+    let raw = input;
+    const patterns = [
+      /<meta\s+name="aimed"\s+content="([^"]+)">/i,
+      /aimed:\s*"([^"]+)"/,
+      /<!--\s*(AIMED\/\d+[^-]+?)\s*-->/,
+      /(?:\/\/|#)\s*(AIMED\/\d+.+?)$/m,
+      /\/\*\s*(AIMED\/\d+.+?)\s*\*\//,
+      /^(AIMED\/\d+.+?)$/m,
+    ];
+
+    for (const p of patterns) {
+      const m = input.match(p);
+      if (m) { raw = m[1].trim(); break; }
+    }
+
+    // Parse
+    const headerMatch = raw.match(/^AIMED\/(\d+)\s+/);
+    if (!headerMatch) throw new Error('Must start with "AIMED/<version> "');
+    if (headerMatch[1] !== '1') throw new Error(`Unsupported version: ${headerMatch[1]}`);
+
+    const rest = raw.slice(headerMatch[0].length);
+    const [scoresPart, metaPart] = rest.split('|').map(s => s.trim());
+
+    const scores = {};
+    const sp = /([A-Z]|\+[a-z]{2}):([0-5])/g;
+    let m;
+    while ((m = sp.exec(scoresPart)) !== null) {
+      scores[m[1]] = parseInt(m[2]);
+    }
+
+    if (Object.keys(scores).length === 0) throw new Error('No valid area:score pairs found');
+
+    // Validate area codes
+    const errors = [];
+    for (const code of Object.keys(scores)) {
+      if (/^[A-Z]$/.test(code) && !CORE_AREAS[code]) {
+        errors.push(`Unknown core area: "${code}"`);
+      }
+    }
+
+    // Parse metadata
+    const metadata = {};
+    if (metaPart) {
+      const mp = /(\w[\w.]*)\s*=\s*(?:"([^"]*)"|(\S+))/g;
+      while ((m = mp.exec(metaPart)) !== null) {
+        metadata[m[1]] = m[2] !== undefined ? m[2] : m[3];
+      }
+    }
+
+    // Composite
+    const vals = Object.values(scores);
+    const comp = Math.round((vals.reduce((a, b) => a + b, 0) / (vals.length * 5)) * 100);
+
+    let output = '✓ VALID AIMED DECLARATION\n\n';
+    output += 'Version: 1.0\n\n';
+    output += 'Scores:\n';
+    for (const [code, score] of Object.entries(scores)) {
+      const name = CORE_AREAS[code] || code;
+      output += `  ${code} (${name}): ${score}/5 — ${INTENSITY[score]}\n`;
+    }
+    output += `\nComposite: ${comp}%\n`;
+    if (Object.keys(metadata).length) {
+      output += '\nMetadata:\n';
+      for (const [k, v] of Object.entries(metadata)) {
+        output += `  ${k}: ${v}\n`;
+      }
+    }
+    if (errors.length) {
+      output += '\n⚠ Warnings:\n' + errors.map(e => `  - ${e}`).join('\n');
+    }
+
+    // Also load into builder
+    Object.keys(state).forEach(k => state[k] = 0);
+    for (const [code, score] of Object.entries(scores)) {
+      if (state.hasOwnProperty(code)) state[code] = score;
+    }
+    if (metadata.tool) document.getElementById('meta-tool').value = metadata.tool;
+    if (metadata.author) document.getElementById('meta-author').value = metadata.author;
+    if (metadata.note) document.getElementById('meta-note').value = metadata.note;
+    buildAreas();
+    render();
+
+    result.className = 'parse-result show success';
+    result.textContent = output;
+  } catch (err) {
+    result.className = 'parse-result show error';
+    result.textContent = `✗ PARSE ERROR: ${err.message}`;
+  }
+}
+
+// ── Init ──
+buildAreas();
+render();
+</script>
+
+</body>
+</html>

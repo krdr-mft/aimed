@@ -1,0 +1,22 @@
+# AIMED declaration for academic paper:
+# "Transformer Attention Patterns in Low-Resource Languages"
+
+aimed:
+  version: "1.0"
+  scores:
+    I: 0        # All ideas originated from the research team
+    R: 2        # AI assisted with literature search queries
+    D: 1        # AI helped rephrase some paragraphs for clarity
+    E: 3        # AI used for grammar, style, and structural editing
+    A: 4        # AI performed bulk of statistical analysis on attention maps
+    V: 2        # AI helped verify citations and cross-reference claims
+    S: 0        # Study design was entirely human-driven
+  metadata:
+    tool: "claude-4"
+    author: "Dr. A. Researcher, University of Example"
+    date: "2026-02-20"
+    note: >
+      AI was used primarily for data analysis (computing attention entropy
+      across 47 language pairs) and manuscript editing. All hypotheses,
+      methodology, experimental design, and conclusions are the authors' own.
+      Statistical code was reviewed by two co-authors.

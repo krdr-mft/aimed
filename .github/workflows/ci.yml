@@ -1,0 +1,77 @@
+name: AIMED CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate-schema:
+    name: Validate JSON Schema
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install ajv-cli
+        run: npm install -g ajv-cli ajv-formats
+
+      - name: Validate schema is valid JSON Schema
+        run: ajv compile -s schema/aimed.schema.json
+
+      - name: Validate example declarations
+        run: |
+          ajv validate -s schema/aimed.schema.json -d examples/package-json.json
+          ajv validate -s schema/aimed.schema.json -d examples/academic-paper.yaml --spec=yaml
+
+  test-parser:
+    name: Test Parser Library
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run parser tests
+        run: node lib/aimed.test.js
+
+  lint-declarations:
+    name: Check Repo Self-Declarations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check that key files have AIMED declarations
+        run: |
+          echo "Checking for AIMED declarations in repo files..."
+          files_to_check=(
+            "README.md"
+            "CONTRIBUTING.md"
+            "CODE_OF_CONDUCT.md"
+            "lib/aimed.js"
+            "spec/AIMED-v1.0.md"
+          )
+          missing=0
+          for file in "${files_to_check[@]}"; do
+            if ! grep -q "AIMED/" "$file" 2>/dev/null; then
+              echo "⚠ Missing AIMED declaration: $file"
+              missing=$((missing + 1))
+            else
+              echo "✓ $file"
+            fi
+          done
+          if [ $missing -gt 0 ]; then
+            echo ""
+            echo "$missing file(s) missing AIMED declarations"
+            exit 1
+          fi
+          echo ""
+          echo "All files have AIMED declarations ✓"

@@ -1,0 +1,24 @@
+{
+  "name": "my-awesome-project",
+  "version": "2.1.0",
+  "description": "A project that uses AIMED to declare AI involvement",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "jest"
+  },
+  "aimed": {
+    "version": "1.0",
+    "scores": {
+      "S": 2,
+      "D": 4,
+      "E": 3,
+      "V": 3
+    },
+    "metadata": {
+      "tool": "claude-code",
+      "note": "AI generated initial codebase from architecture spec; human reviewed all modules and wrote tests"
+    }
+  },
+  "license": "MIT"
+}
