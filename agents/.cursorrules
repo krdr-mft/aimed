@@ -1,0 +1,38 @@
+# AIMED Self-Declaration Rules
+
+All AI-generated or AI-modified code in this project must include an AIMED/1 transparency declaration per the aiMed open standard (https://github.com/krdr-mft/aimed).
+
+## Required Behavior
+
+1. When you create a new file, add `// AIMED/1 <scores> | tool=cursor` as the first comment.
+2. When you generate a function or class, add the declaration to its docblock.
+3. When composing a commit message, add the declaration as the last line.
+
+## Scoring
+
+Rate your involvement per area on a 0-5 scale:
+- D (Drafting): How much of the code you wrote. D:5 = you wrote it all.
+- E (Editing): How much you refactored or improved. E:4 = major refactor.
+- S (Strategy): How much you decided the approach. S:0 = human told you exactly what to do.
+- V (Validation): How much you reviewed or tested. V:3 = you checked it meaningfully.
+
+Only include areas where you contributed. When uncertain, score higher.
+
+## Examples
+
+```typescript
+// AIMED/1 D:5 E:3 V:2 | tool=cursor
+
+export class AuthService {
+    // ...
+}
+```
+
+```python
+def process_payment(order_id: str) -> PaymentResult:
+    """Process payment for the given order.
+    
+    AIMED/1 S:2 D:5 E:3 | tool=cursor
+    """
+    ...
+```
